@@ -114,6 +114,14 @@ float translate_z = 0.0f;
 //
 float r_1=grid_height*1/2, r_2=grid_height*3/4;
 
+//rect
+float rectD;
+
+void prinfData(void){
+  printf("lambda %.5f \n",lambda);
+  printf("freq %.5f \n", freq);
+  printf("rectD %.5f \n", rectD);
+}
 
 /**************************
  *   forward declaration   *
@@ -147,44 +155,81 @@ void free_data(void);
 
 void PEC(void);
 
-void drawCircle(int x0, int y0, int r);
-void drawCircle3(int x0, int y0, int r);
-void drawCircle4(int x0, int y0, int r);
-void drawRact(int r);
-void drawRact(int r)
+void drawCircle(int x0, int y0, float r);
+void drawCircle3(int x0, int y0, float r);
+void drawCircle4(int x0, int y0, float r);
+void drawRact(float r);
+void prinfData(void);
+
+void drawRactColor(float r);
+
+
+
+
+void drawRactColor(float r)
 {
   int i, j;
-  for(i=0;i<grid_width*3/4+r/2;i++)
+  int index;
+  for(i=0;i<grid_width;i++)
   {
-    j=grid_height/2-r/2;
-    Ez[i][j] = 0.0;
-    Hx[i][j] = 0.0;
-    Hy[i][j] = 0.0;
+    for(j=0;j<grid_height/2-r/2;j++)
+    {
+      index = grid_width * j + i;
+      h_g_data[index*3] = (GLubyte)0;
+      h_g_data[index*3+1] = (GLubyte)0;
+      h_g_data[index*3+2] = (GLubyte)0;
+    }
   }
-  for(i=0;i<grid_width*3/4-r/2;i++)
+  for(i=0;i<grid_width/2;i++)
   {
-    j=grid_height/2+r/2;
-    Ez[i][j] = 0.0;
-    Hx[i][j] = 0.0;
-    Hy[i][j] = 0.0;
+    for(j=grid_height/2+r/2;j<grid_height;j++)
+    {
+      index = grid_width * j + i;
+      h_g_data[index*3] = (GLubyte)0;
+      h_g_data[index*3+1] = (GLubyte)0;
+      h_g_data[index*3+2] = (GLubyte)0;
+    }
   }
-  for(j=grid_height/2-r/2;j<grid_height;j++)
+  for(i=grid_width/2+r;i<grid_width;i++)
   {
-    i=grid_width*3/4+r/2;
-    Ez[i][j] = 0.0;
-    Hx[i][j] = 0.0;
-    Hy[i][j] = 0.0;
+    for(j=grid_height/2-r/2;j<grid_height;j++)
+    {
+      index = grid_width * j + i;
+      h_g_data[index*3] = (GLubyte)0;
+      h_g_data[index*3+1] = (GLubyte)0;
+      h_g_data[index*3+2] = (GLubyte)0;
+    }
   }
-  for(j=grid_height/2+r/2;j<grid_height;j++)
+  
+
+}
+void drawRact(float r)
+{
+  int i, j;
+  for(i=0;i<grid_width;i++)
   {
-    i=grid_width*3/4-r/2;
-    Ez[i][j] = 0.0;
-    Hx[i][j] = 0.0;
-    Hy[i][j] = 0.0;
+    for(j=0;j<grid_height/2-r/2;j++)
+    {
+      Ez[i][j]=0.0;
+    }
+  }
+  for(i=0;i<grid_width/2;i++)
+  {
+    for(j=grid_height/2+r/2;j<grid_height;j++)
+    {
+      Ez[i][j]=0.0;
+    }
+  }
+  for(i=grid_width/2+r;i<grid_width;i++)
+  {
+    for(j=grid_height/2-r/2;j<grid_height;j++)
+    {
+      Ez[i][j]=0.0;
+    }
   }
 }
 
-void drawCircle3(int x0, int y0, int r)
+void drawCircle3(int x0, int y0, float r)
 {
   int x=0, y=0;
   for(y=-r; y<=r; y++)
@@ -203,7 +248,7 @@ void drawCircle3(int x0, int y0, int r)
     }
   }
 }
-void drawCircle4(int x0, int y0, int r)
+void drawCircle4(int x0, int y0, float r)
 {
   int x=0, y=0;
   for(y=-r; y<=r; y++)
@@ -223,7 +268,7 @@ void drawCircle4(int x0, int y0, int r)
   }
 }
 
-void drawCircle(int x0, int y0, int r)
+void drawCircle(int x0, int y0, float r)
 {
   int x = r;
   int y = 0;
@@ -262,7 +307,7 @@ void PEC(void)
   /* drawCircle3(0, grid_height, r_1); */
   /* drawCircle4(0, grid_height, r_2); */
 
-  drawRact(30);
+  drawRact(rectD);
 
 }
 
@@ -277,7 +322,7 @@ void h_FDTD2d_tm(void)
     for(i = 1; i < grid_width-1; i++){
       /* if(i==grid_width/3 && j==grid_height/3){ */
       /* if(i==grid_width/2 && j==grid_height/2){ */
-      if(i == grid_width*2/3 && j==grid_height/2){
+      if(i == grid_width*1/20 && j==grid_height/2){
         Ez[i][j] = 1.0/376.7 * pulse;
       }else{
         Ez[i][j] = CEZ[i][j] * Ez[i][j] + CEZLX[i][j] * (Hy[i][j]-Hy[i-1][j]) - CEZLY[i][j] * (Hx[i][j]-Hx[i][j-1]);
@@ -296,7 +341,8 @@ void h_FDTD2d_tm(void)
       }
     }
   }
-
+  
+  PEC();
   T=T+delta_t/2;
 
   //Hx
@@ -362,6 +408,8 @@ void h_FDTD2d_tm(void)
       }
     }
   }
+
+  drawRactColor(rectD);
   kt++;
 }
 
@@ -478,30 +526,11 @@ void setInitialData(unsigned int width, unsigned int height)
   // unsigned int width, height; 格子のX方向とY方向の解像度．
   // float *max_density; 濃度の最大値．
 {
-  /*unsigned int i, j, index;
-    float x, y;
-    grid_dx = (max_x - min_x) / width;
-    grid_dy = (max_y - min_y) / height;
-
-  // 矩形の濃度場を与える．
-   *max_density = 1.0f;
-   h_F = (float *)malloc(width * height * sizeof(float));
-   h_Fn = (float *)malloc(width * height * sizeof(float));
-   for (i = 0; i < height; i++) {
-   for (j = 0; j < width; j++) {
-   index = width * i + j;
-   x = grid_dx * (j + 0.5f) + min_x;
-   y = grid_dy * (i + 0.5f) + min_y;
-   if ((x > (0.75f * min_x + 0.25f * max_x)) && (x < (0.25f * min_x + 0.75f * max_x)) && (y > (0.75f * min_y + 0.25f * max_y)) && (y < (0.25f * min_y + 0.75f * max_y))){
-   h_F[index] = *max_density;
-   }else{
-   h_F[index] = 0.0f;
-   }
-   }
-   }
-   */
 
   lambda = c / freq;
+
+  rectD=10;
+
   delta_x = lambda / resolution;
   delta_y = lambda / resolution;	
   delta_t = (1.0 / (sqrt(pow((1 / delta_x), 2.0)+pow((1 / delta_y), 2.0))))*(1.0 / c)*alpha;
@@ -702,7 +731,7 @@ void display(void)
   if(flag == true){
     incrt++;
     if (incrt % 100 == 0){
-      printf("time(%4d): %7.5f\n", incrt, anim_time);
+      /* printf("time(%4d): %7.5f\n", incrt, anim_time); */
     }
   }
   if(incrt == 400){
@@ -877,6 +906,7 @@ int main(int argc, char **argv)
   malloc_Initialdata();
   setInitialData(grid_width, grid_height);
   // printf("Max: %f\n", max_density);
+  prinfData();
 
   // anim_dt = 0.2 * MIN(grid_dx*grid_dx, grid_dy*grid_dy) / kappa;
 
