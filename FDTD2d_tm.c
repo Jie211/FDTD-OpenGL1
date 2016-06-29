@@ -10,7 +10,7 @@
 /*******************************
  *   OpenGL Graphics includes   *
  *******************************/
-#include <GL/glew.h>
+/* #include <GL/glew.h> */
 #include <GL/glut.h>
 
 
@@ -20,20 +20,13 @@
 const unsigned int window_x_pos = 128;
 const unsigned int window_y_pos = 128;
 
-/* const unsigned int window_width = 256; */
-/* const unsigned int window_height = 256; */
 const unsigned int window_width = 512;
 const unsigned int window_height = 512;
 
 
 const unsigned int grid_width = 256;
 const unsigned int grid_height = 256;
-/* const unsigned int grid_width = 512; */
-/* const unsigned int grid_height = 512; */
 
-
-// unsigned int grid_width = 51;
-// unsigned int grid_height = 51;
 
 const float min_x = -0.5f;
 const float max_x = 0.5f;
@@ -78,9 +71,6 @@ float **EZX, **EZY, **HXY, **HYX;
 
 float **CEZ, **CEZLX, **CEZLY, **CHXLY, **CHYLX;
 
-// grid_2d
-// float *h_F, *h_Fn;
-// float grid_dx, grid_dy;
 
 // texture
 GLuint tex;
@@ -93,7 +83,7 @@ unsigned int incrt = 1;
 float anim_time = 0.0f;
 float anim_dt;
 
-bool flag = false;
+bool flag = true;
 bool z_flag = false;
 
 #define MAX(a,b) ((a > b) ? a : b)
@@ -108,25 +98,24 @@ int GLtimebase = 0;
 int mouse_old_x, mouse_old_y;
 int mouse_buttons = 0;
 float rotate_x = 0.0f, rotate_y = 0.0f;
-// float translate_z = -3.0f;
-/* float translate_z = 0.0f; */
 
 
 float translate_xr = 1.0f, translate_xl = 0.0f, translate_yt = 1.0f, translate_yb = 0.0f, translate_z = 0.0f;
 
 float view_range = 0.3f;
 
-// FILE *Ez_op;
-//
-float r_1=grid_height*1/2, r_2=grid_height*3/4;
-
 //rect
 float rectD;
+
+int power_x, power_y;
 
 void prinfData(void){
   printf("lambda %.5f \n",lambda);
   printf("freq %.5f \n", freq);
   printf("rectD %.5f \n", rectD);
+  printf("delta_x %.5f\n", delta_x);
+  printf("delta_y %.5f\n", delta_y);
+  printf("delta_t %.5f\n", delta_t);
 }
 
 /**************************
@@ -168,6 +157,10 @@ void drawRactColor(float r);
 void drawWall(void);
 void drawWallColor(void);
 
+void FDTDInit(void);
+
+void PMLInit(void);
+
 void drawWallColor(void)
 {
   int i, j;
@@ -177,14 +170,14 @@ void drawWallColor(void)
     j=0;
     index = grid_width * j + i;
     h_g_data[index*3] = (GLubyte)255;
-    h_g_data[index*3+1] = (GLubyte)0;
-    h_g_data[index*3+2] = (GLubyte)0;
+    h_g_data[index*3+1] = (GLubyte)255;
+    h_g_data[index*3+2] = (GLubyte)255;
 
     j=grid_height-1;
     index = grid_width * j + i;
     h_g_data[index*3] = (GLubyte)255;
-    h_g_data[index*3+1] = (GLubyte)0;
-    h_g_data[index*3+2] = (GLubyte)0;
+    h_g_data[index*3+1] = (GLubyte)255;
+    h_g_data[index*3+2] = (GLubyte)255;
 
   }
   for(j=0;j<grid_height;j++)
@@ -192,14 +185,13 @@ void drawWallColor(void)
     i=0;
     index = grid_width * j + i;
     h_g_data[index*3] = (GLubyte)255;
-    h_g_data[index*3+1] = (GLubyte)0;
-    h_g_data[index*3+2] = (GLubyte)0;
-
-    j=grid_width-1;
+    h_g_data[index*3+1] = (GLubyte)255;
+    h_g_data[index*3+2] = (GLubyte)255;
+    i=grid_width-1;
     index = grid_width * j + i;
     h_g_data[index*3] = (GLubyte)255;
-    h_g_data[index*3+1] = (GLubyte)0;
-    h_g_data[index*3+2] = (GLubyte)0;
+    h_g_data[index*3+1] = (GLubyte)255;
+    h_g_data[index*3+2] = (GLubyte)255;
 
   }
 }
@@ -217,7 +209,7 @@ void drawWall(void)
   {
     i=0;
     Ez[i][j]=0.0;
-    j=grid_width-1;
+    i=grid_width-1;
     Ez[i][j]=0.0;
   }
 }
@@ -309,12 +301,8 @@ void drawRact(float r)
 
 void PEC(void)
 {
-  /* drawCircle3(0, grid_height, r_1); */
-  /* drawCircle4(0, grid_height, r_2); */
-
   drawRact(rectD);
   drawWall();
-
 }
 
 void h_FDTD2d_tm(void)
@@ -326,16 +314,9 @@ void h_FDTD2d_tm(void)
   //Ez
   for(j = 1; j < grid_height-1; j++){
     for(i = 1; i < grid_width-1; i++){
-      /* if(i==grid_width/3 && j==grid_height/3){ */
-      /* if(i==grid_width/2 && j==grid_height/2){ */
-      if(i == grid_width/20 && j==grid_height/2-1){
-        Ez[i][j] = 1.0/376.7 * pulse;
-      }else{
         Ez[i][j] = CEZ[i][j] * Ez[i][j] + CEZLX[i][j] * (Hy[i][j]-Hy[i-1][j]) - CEZLY[i][j] * (Hx[i][j]-Hx[i][j-1]);
-      }
     }
   }
-  /* PEC(); */
 
   /* Ez for PML */
   for(j = 1; j<grid_height - 1; j++){
@@ -347,8 +328,19 @@ void h_FDTD2d_tm(void)
       }
     }
   }
-  
-  PEC();
+
+  //power input
+  for(j=1;j<grid_height-1;j++)
+  {
+    for(i=1;i<grid_width-1;i++)
+    {
+      if(i == power_x && j == power_y)
+      {
+        Ez[i][j] = 1.0/376.7 * pulse;
+      }
+    }
+  }
+
   T=T+delta_t/2;
 
   //Hx
@@ -386,6 +378,8 @@ void h_FDTD2d_tm(void)
   }
 
   T=T+delta_t/2;
+
+  PEC();
 
   /***create graphic data***/
   float v;
@@ -526,33 +520,10 @@ void free_data(void)
   free(CHYLX);
 }
 
-/************************
- * Initialize Data      *
- ************************/
-void setInitialData(unsigned int width, unsigned int height)
-  // unsigned int width, height; 格子のX方向とY方向の解像度．
+void FDTDInit(void)
 {
-
-  lambda = c / freq;
-
-  rectD=10;
-
-  delta_x = lambda / resolution;
-  delta_y = lambda / resolution;	
-  delta_t = (1.0 / (sqrt(pow((1 / delta_x), 2.0)+pow((1 / delta_y), 2.0))))*(1.0 / c)*alpha;
-  anim_dt = (1.0 / (sqrt(pow((1 / delta_x), 2.0)+pow((1 / delta_y), 2.0))))*(1.0 / c)*alpha;
-  step = 1.0 / freq / delta_t;
-  mu0 = 1.0e-7f * 4.0 * M_PI;
-  ecmax = -(M+1)*epsilon0*c / (2.0*L*delta_x)*r0;
-  Ez_range = Ez_max-Ez_min; // 2.7800852e-03f 
-  Ez_yellow = Ez_range*0.75f+Ez_min;
-  Ez_green = Ez_range*0.50f+Ez_min;
-  Ez_lightblue = Ez_range*0.25f+Ez_min;
-
-  // printf("%.12e\n", Ez_lightblue);
-
   int i, j;
-  float Z, ZZ;
+  float ZZ;
   for(j = 0; j<grid_height; j++){
     for(i = 0; i<grid_width; i++){
       mu_M[i][j]  =  mu0;
@@ -598,6 +569,24 @@ void setInitialData(unsigned int width, unsigned int height)
     ECY[grid_height-i-1] = ECX[i];
   }
 
+  //FDTD init
+  for(i=0;i<grid_width;i++){
+    for(j=0;j<grid_height;j++){
+      ZZ = (sigma_M[i][j] * delta_t)/(2.0*epsilon_M[i][j]);
+      CEZ[i][j]=(1-ZZ)/(1+ZZ);
+      CEZLX[i][j]=(delta_t/epsilon_M[i][j])/(1+ZZ)*(1.0/delta_x);
+      CEZLY[i][j]=(delta_t/epsilon_M[i][j])/(1+ZZ)*(1.0/delta_y);
+      CHXLY[i][j]=delta_t/mu_M[i][j]*(1.0/delta_y);
+      CHYLX[i][j]=delta_t/mu_M[i][j]*(1.0/delta_x);
+    }
+  }
+}
+
+void PMLInit(void)
+{
+  int i, j;
+  float Z;
+
   //PML init
   for(i=0;i<grid_width;i++){
     for(j=0;j<grid_height;j++){
@@ -613,18 +602,34 @@ void setInitialData(unsigned int width, unsigned int height)
       CHXYL[i][j]=(delta_t/mu_M[i][j])*(1.0/delta_y);
     }
   }
+}
 
-  //FDTD init
-  for(i=0;i<grid_width;i++){
-    for(j=0;j<grid_height;j++){
-      ZZ = (sigma_M[i][j] * delta_t)/(2.0*epsilon_M[i][j]);
-      CEZ[i][j]=(1-ZZ)/(1+ZZ);
-      CEZLX[i][j]=(delta_t/epsilon_M[i][j])/(1+ZZ)*(1.0/delta_x);
-      CEZLY[i][j]=(delta_t/epsilon_M[i][j])/(1+ZZ)*(1.0/delta_y);
-      CHXLY[i][j]=delta_t/mu_M[i][j]*(1.0/delta_y);
-      CHYLX[i][j]=delta_t/mu_M[i][j]*(1.0/delta_x);
-    }
-  }
+/************************
+ * Initialize Data      *
+ ************************/
+void setInitialData(unsigned int width, unsigned int height)
+  // unsigned int width, height; 格子のX方向とY方向の解像度．
+{
+
+  lambda = c / freq;
+
+  power_x=10;
+  power_y=grid_height/2-1;
+
+  rectD=10;
+
+  delta_x = lambda / resolution;
+  delta_y = lambda / resolution;	
+  delta_t = (1.0 / (sqrt(pow((1 / delta_x), 2.0)+pow((1 / delta_y), 2.0))))*(1.0 / c)*alpha;
+  anim_dt = (1.0 / (sqrt(pow((1 / delta_x), 2.0)+pow((1 / delta_y), 2.0))))*(1.0 / c)*alpha;
+  step = 1.0 / freq / delta_t;
+  mu0 = 1.0e-7f * 4.0 * M_PI;
+  ecmax = -(M+1)*epsilon0*c / (2.0*L*delta_x)*r0;
+  Ez_range = Ez_max-Ez_min; // 2.7800852e-03f 
+  Ez_yellow = Ez_range*0.75f+Ez_min;
+  Ez_green = Ez_range*0.50f+Ez_min;
+  Ez_lightblue = Ez_range*0.25f+Ez_min;
+
 }
 
 // Create texture
@@ -664,15 +669,8 @@ bool initGL(void){
 
 
   /*** initialize glew ***/
-  glewInit();
-  /*if (!glewIsSupported("GL_VERSION_2_0")) {
-    fprintf(stderr, "ERROR: Support for necessary OpenGL extensions missing.");
-    return false;
-    }*/
-
+  /* glewInit(); */
   // create texture
-  // h_g_data = (int *)malloc(grid_width * grid_height * sizeof(int));
-  // h_g_data = new GLubyte[grid_width * grid_height * 3];
   h_g_data = (GLubyte *)malloc(sizeof(GLubyte) * grid_width * grid_height * 3);
   createTexture(&tex, grid_width, grid_height);
 
@@ -724,10 +722,6 @@ void display(void)
   glTexCoord2f(translate_xr, translate_yb); glVertex2f(1.0, - 1.0); 
   glTexCoord2f(translate_xr, translate_yt); glVertex2f(1.0, 1.0); 
   glTexCoord2f(translate_xl, translate_yt); glVertex2f(- 1.0, 1.0);
-  // glTexCoord2f(0.0f, 0.0f); glVertex2f(- 0.5, - 0.5); 
-  // glTexCoord2f(0.5f, 0.0f); glVertex2f(0.5, - 0.5); 
-  // glTexCoord2f(0.5f, 0.5f); glVertex2f(0.5, 0.5); 
-  //glTexCoord2f(0.0f, 0.5f); glVertex2f(- 0.5, 0.5);
   glEnd();	
 
   /*** update graphics ***/
@@ -740,9 +734,9 @@ void display(void)
       /* printf("time(%4d): %7.5f\n", incrt, anim_time); */
     }
   }
-  if(incrt == 400){
-    flag = false;
-  }
+  /* if(incrt == 400){ */
+  /*   flag = false; */
+  /* } */
 
   /*** timer ***/
   GLframe++;
@@ -758,42 +752,6 @@ void display(void)
   }
 }
 
-/* case 'i': */
-/*       rotate_x +=2; */
-/*       break; */
-/*     case 'k': */
-/*       rotate_x -=2; */
-/*       break; */
-/*     case 'j': */
-/*       rotate_y +=2; */
-/*       break; */
-/*     case 'l': */
-/*       rotate_y -=2; */
-/*       break; */
-/*     case 'u': */
-/*       translate_z +=0.1; */
-/*       break; */
-/*     case 'o': */
-/*       translate_z -=0.1; */
-/*       break; */
-/*     case 'I': */
-/*       rotate_x +=0.4; */
-/*       break; */
-/*     case 'K': */
-/*       rotate_x -=0.4; */
-/*       break; */
-/*     case 'J': */
-/*       rotate_y +=0.4; */
-/*       break; */
-/*     case 'L': */
-/*       rotate_y -=0.4; */
-/*       break; */
-/*     case 'U': */
-/*       translate_z +=0.02; */
-/*       break; */
-/*     case 'O': */
-/*       translate_z -=0.02; */
-/*       break; */
 /****************************
  *   Keyboard events handler *
  ****************************/
@@ -832,6 +790,21 @@ void keyboard(unsigned char key, int x, int y)
       }
       z_flag = !z_flag;
       break;
+    case 'Z':
+      if(z_flag == false){
+        translate_xl -= view_range;
+        translate_yb -= view_range;
+        translate_xr += view_range;
+        translate_yt += view_range;
+      }else{
+        translate_xl += view_range;
+        translate_yb += view_range;
+        translate_xr -= view_range;
+        translate_yt -= view_range;
+      }
+      z_flag = !z_flag;
+      break;
+
     case 's':
       flag = !flag;
       break;
@@ -860,12 +833,13 @@ void keyboard(unsigned char key, int x, int y)
       anim_time = 0.0f;
       rotate_x=0.0f;
       rotate_y=0.0f;
-      // translate_z = -3.0f;
       translate_z = 0.0f;
-      setInitialData(grid_width, grid_height);
-      // printf("Max: %f\n", max_density);
+      /* setInitialData(grid_width, grid_height);  */
+      FDTDInit();
+      PMLInit();
       glutSwapBuffers();
       glutPostRedisplay();
+      flag = true;
       break;
   }
 }
@@ -910,11 +884,7 @@ void motion(int x, int y)
 
 void cleanUp(void)
 {
-  // free(h_F);
-  // free(h_Fn);
-
   /*** delete texture ***/
-  // fclose(Ez_op);
   deleteTexture(&tex);
   free(h_g_data);
   free_data();
@@ -925,13 +895,6 @@ void cleanUp(void)
  *******************/
 int main(int argc, char **argv)
 {
-  /*
-     if((Ez_op=fopen("Ez.txt","a"))==NULL){
-     printf("file error\n");
-     return 1;
-     }
-     */
-  // printf("%d\n", grid_width);
 
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
@@ -942,17 +905,16 @@ int main(int argc, char **argv)
   // glutReshapeFunc(resize);
   glutKeyboardFunc(keyboard);
   glutMouseFunc(mouse);
-  glutMotionFunc(motion);
+  /* glutMotionFunc(motion); */
   glViewport(0, 0, window_width, window_height);
   atexit(cleanUp);
 
   /*** init data ***/
   malloc_Initialdata();
   setInitialData(grid_width, grid_height);
-  // printf("Max: %f\n", max_density);
+  FDTDInit();
+  PMLInit();
   prinfData();
-
-  // anim_dt = 0.2 * MIN(grid_dx*grid_dx, grid_dy*grid_dy) / kappa;
 
   if(!initGL()){
     return 1;
