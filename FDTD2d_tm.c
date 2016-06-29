@@ -94,6 +94,7 @@ float anim_time = 0.0f;
 float anim_dt;
 
 bool flag = false;
+bool z_flag = false;
 
 #define MAX(a,b) ((a > b) ? a : b)
 #define MIN(a,b) ((a < b) ? a : b)
@@ -108,7 +109,12 @@ int mouse_old_x, mouse_old_y;
 int mouse_buttons = 0;
 float rotate_x = 0.0f, rotate_y = 0.0f;
 // float translate_z = -3.0f;
-float translate_z = 0.0f;
+/* float translate_z = 0.0f; */
+
+
+float translate_xr = 1.0f, translate_xl = 0.0f, translate_yt = 1.0f, translate_yb = 0.0f, translate_z = 0.0f;
+
+float view_range = 0.3f;
 
 // FILE *Ez_op;
 //
@@ -155,20 +161,71 @@ void free_data(void);
 
 void PEC(void);
 
-void drawCircle(int x0, int y0, float r);
-void drawCircle3(int x0, int y0, float r);
-void drawCircle4(int x0, int y0, float r);
 void drawRact(float r);
 void prinfData(void);
 
 void drawRactColor(float r);
+void drawWall(void);
+void drawWallColor(void);
 
+void drawWallColor(void)
+{
+  int i, j;
+  int index;
+  for(i=0;i<grid_width;i++)
+  {
+    j=0;
+    index = grid_width * j + i;
+    h_g_data[index*3] = (GLubyte)255;
+    h_g_data[index*3+1] = (GLubyte)0;
+    h_g_data[index*3+2] = (GLubyte)0;
 
+    j=grid_height-1;
+    index = grid_width * j + i;
+    h_g_data[index*3] = (GLubyte)255;
+    h_g_data[index*3+1] = (GLubyte)0;
+    h_g_data[index*3+2] = (GLubyte)0;
+
+  }
+  for(j=0;j<grid_height;j++)
+  {
+    i=0;
+    index = grid_width * j + i;
+    h_g_data[index*3] = (GLubyte)255;
+    h_g_data[index*3+1] = (GLubyte)0;
+    h_g_data[index*3+2] = (GLubyte)0;
+
+    j=grid_width-1;
+    index = grid_width * j + i;
+    h_g_data[index*3] = (GLubyte)255;
+    h_g_data[index*3+1] = (GLubyte)0;
+    h_g_data[index*3+2] = (GLubyte)0;
+
+  }
+}
+void drawWall(void)
+{
+  int i, j;
+  for(i=0;i<grid_width;i++)
+  {
+    j=0;
+    Ez[i][j]=0.0;
+    j=grid_height-1;
+    Ez[i][j]=0.0;
+  }
+  for(j=0;j<grid_height;j++)
+  {
+    i=0;
+    Ez[i][j]=0.0;
+    j=grid_width-1;
+    Ez[i][j]=0.0;
+  }
+}
 
 
 void drawRactColor(float r)
 {
-  int i, j;
+  int i, j, k;
   int index;
   for(i=0;i<grid_width;i++)
   {
@@ -180,7 +237,7 @@ void drawRactColor(float r)
       h_g_data[index*3+2] = (GLubyte)0;
     }
   }
-  for(i=0;i<grid_width/2;i++)
+  for(i=0;i<grid_width/2-r/2;i++)
   {
     for(j=grid_height/2+r/2;j<grid_height;j++)
     {
@@ -190,7 +247,7 @@ void drawRactColor(float r)
       h_g_data[index*3+2] = (GLubyte)0;
     }
   }
-  for(i=grid_width/2+r;i<grid_width;i++)
+  for(i=grid_width/2+r/2;i<grid_width;i++)
   {
     for(j=grid_height/2-r/2;j<grid_height;j++)
     {
@@ -200,12 +257,25 @@ void drawRactColor(float r)
       h_g_data[index*3+2] = (GLubyte)0;
     }
   }
-  
+  j=grid_height/2-r/2;
+  for(i=grid_width/2-r/2;i<grid_width/2+r/2;i++)
+  {
+
+    for(k=grid_height/2-r/2;k<=j;k++)
+    {
+      index = grid_width * k + i;
+      h_g_data[index*3] = (GLubyte)0;
+      h_g_data[index*3+1] = (GLubyte)0;
+      h_g_data[index*3+2] = (GLubyte)0;
+    }
+    j+=(int)(sqrt(2));
+  } 
 
 }
+
 void drawRact(float r)
 {
-  int i, j;
+  int i, j, k;
   for(i=0;i<grid_width;i++)
   {
     for(j=0;j<grid_height/2-r/2;j++)
@@ -213,93 +283,28 @@ void drawRact(float r)
       Ez[i][j]=0.0;
     }
   }
-  for(i=0;i<grid_width/2;i++)
+  for(i=0;i<grid_width/2-r/2;i++)
   {
     for(j=grid_height/2+r/2;j<grid_height;j++)
     {
       Ez[i][j]=0.0;
     }
   }
-  for(i=grid_width/2+r;i<grid_width;i++)
+  for(i=grid_width/2+r/2;i<grid_width;i++)
   {
     for(j=grid_height/2-r/2;j<grid_height;j++)
     {
       Ez[i][j]=0.0;
     }
   }
-}
-
-void drawCircle3(int x0, int y0, float r)
-{
-  int x=0, y=0;
-  for(y=-r; y<=r; y++)
+  j=grid_height/2-r/2;
+  for(i=grid_width/2-r/2;i<grid_width/2+r/2;i++)
   {
-    for(x=-r; x<=r; x++)
-    {
-      if(x*x+y*y <= r*r)
-      {
-        if(x0+x>=0 && x0+x<grid_width && y0+y>=0 && y0+y<grid_height)
-        {
-          Ez[x0+x][y0+y]=0.0;
-          Hx[x0+x][y0+y]=0.0;
-          Hy[x0+x][y0+y]=0.0;
-        }
-      }
-    }
-  }
-}
-void drawCircle4(int x0, int y0, float r)
-{
-  int x=0, y=0;
-  for(y=-r; y<=r; y++)
-  {
-    for(x=-r; x<=r; x++)
-    {
-      if(x*x+y*y > r*r)
-      {
-        if(x0+x>=0 && x0+x<grid_width && y0+y>=0 && y0+y<grid_height)
-        {
-          Ez[x0+x][y0+y]=0.0;
-          Hx[x0+x][y0+y]=0.0;
-          Hy[x0+x][y0+y]=0.0;
-        }
-      }
-    }
-  }
-}
+    for(k=grid_height/2-r/2;k<=j;k++)
+      Ez[i][k]=0.0;
+    j+=(int)(sqrt(2));
+  } 
 
-void drawCircle(int x0, int y0, float r)
-{
-  int x = r;
-  int y = 0;
-  int err = 0;
-  while(x>=y)
-  {
-    if(x0+x <= grid_width && y0+y <= grid_height && x0+x >= 0 && y0+y >=0)
-      Ez[x0+x][y0+y]=0;
-    if(x0+y <= grid_width && y0+x <= grid_height && x0+y >= 0 && y0+x >=0)
-      Ez[x0+y][y0+x]=0;
-    if(x0-y <= grid_width && y0+x <= grid_height && x0-y >= 0 && y0+x >=0)
-      Ez[x0-y][y0+x]=0;
-    if(x0-x <= grid_width && y0+y <= grid_height && x0-x >= 0 && y0+y >=0)
-      Ez[x0-x][y0+y]=0;
-    if(x0-x <= grid_width && y0-y <= grid_height && x0-x >= 0 && y0-y >=0)
-      Ez[x0-x][y0-y]=0;
-    if(x0-y <= grid_width && y0-x <= grid_height && x0-y >= 0 && y0-x >=0)
-      Ez[x0-y][y0-x]=0;
-    if(x0+y <= grid_width && y0-x <= grid_height && x0+y >= 0 && y0-x >=0)
-      Ez[x0+y][y0-x]=0;
-    if(x0+x <= grid_width && y0-y <= grid_height && x0+x >= 0 && y0-y >=0)
-      Ez[x0+x][y0-y]=0;
-
-    y+=1;
-    err += 1+2*y;
-    if(2*(err-x)+1>0)
-    {
-      x-=1;
-      err+=1-2*x;
-    }
-  }
 }
 
 void PEC(void)
@@ -308,6 +313,7 @@ void PEC(void)
   /* drawCircle4(0, grid_height, r_2); */
 
   drawRact(rectD);
+  drawWall();
 
 }
 
@@ -322,14 +328,14 @@ void h_FDTD2d_tm(void)
     for(i = 1; i < grid_width-1; i++){
       /* if(i==grid_width/3 && j==grid_height/3){ */
       /* if(i==grid_width/2 && j==grid_height/2){ */
-      if(i == grid_width*1/20 && j==grid_height/2){
+      if(i == grid_width/20 && j==grid_height/2-1){
         Ez[i][j] = 1.0/376.7 * pulse;
       }else{
         Ez[i][j] = CEZ[i][j] * Ez[i][j] + CEZLX[i][j] * (Hy[i][j]-Hy[i-1][j]) - CEZLY[i][j] * (Hx[i][j]-Hx[i][j-1]);
       }
     }
   }
-  PEC();
+  /* PEC(); */
 
   /* Ez for PML */
   for(j = 1; j<grid_height - 1; j++){
@@ -410,6 +416,7 @@ void h_FDTD2d_tm(void)
   }
 
   drawRactColor(rectD);
+  drawWallColor();
   kt++;
 }
 
@@ -524,7 +531,6 @@ void free_data(void)
  ************************/
 void setInitialData(unsigned int width, unsigned int height)
   // unsigned int width, height; 格子のX方向とY方向の解像度．
-  // float *max_density; 濃度の最大値．
 {
 
   lambda = c / freq;
@@ -714,10 +720,10 @@ void display(void)
   glBindTexture(GL_TEXTURE_2D, tex);
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   glBegin(GL_QUADS);
-  glTexCoord2f(0.0f, 0.0f); glVertex2f(- 1.0, - 1.0); 
-  glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0, - 1.0); 
-  glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0, 1.0); 
-  glTexCoord2f(0.0f, 1.0f); glVertex2f(- 1.0, 1.0);
+  glTexCoord2f(translate_xl, translate_yb); glVertex2f(- 1.0, - 1.0); 
+  glTexCoord2f(translate_xr, translate_yb); glVertex2f(1.0, - 1.0); 
+  glTexCoord2f(translate_xr, translate_yt); glVertex2f(1.0, 1.0); 
+  glTexCoord2f(translate_xl, translate_yt); glVertex2f(- 1.0, 1.0);
   // glTexCoord2f(0.0f, 0.0f); glVertex2f(- 0.5, - 0.5); 
   // glTexCoord2f(0.5f, 0.0f); glVertex2f(0.5, - 0.5); 
   // glTexCoord2f(0.5f, 0.5f); glVertex2f(0.5, 0.5); 
@@ -752,63 +758,101 @@ void display(void)
   }
 }
 
+/* case 'i': */
+/*       rotate_x +=2; */
+/*       break; */
+/*     case 'k': */
+/*       rotate_x -=2; */
+/*       break; */
+/*     case 'j': */
+/*       rotate_y +=2; */
+/*       break; */
+/*     case 'l': */
+/*       rotate_y -=2; */
+/*       break; */
+/*     case 'u': */
+/*       translate_z +=0.1; */
+/*       break; */
+/*     case 'o': */
+/*       translate_z -=0.1; */
+/*       break; */
+/*     case 'I': */
+/*       rotate_x +=0.4; */
+/*       break; */
+/*     case 'K': */
+/*       rotate_x -=0.4; */
+/*       break; */
+/*     case 'J': */
+/*       rotate_y +=0.4; */
+/*       break; */
+/*     case 'L': */
+/*       rotate_y -=0.4; */
+/*       break; */
+/*     case 'U': */
+/*       translate_z +=0.02; */
+/*       break; */
+/*     case 'O': */
+/*       translate_z -=0.02; */
+/*       break; */
 /****************************
  *   Keyboard events handler *
  ****************************/
 void keyboard(unsigned char key, int x, int y)
 {
   switch (key){
-    case 'x':
-      r_1-=0.5;
-      r_2+=0.5;
+    case '1':
+      rectD+=0.5;
+      printf("rectD -> %.3f\n",rectD);
       break;
-    case 'z':
-      r_1+=0.5;
-      r_2-=0.5;
+    case '2':
+      rectD-=0.5;
+      printf("rectD -> %.3f\n",rectD);
       break;
     case (27):
       exit(EXIT_SUCCESS);
       break;
+    case 'v':
+      translate_xr = 1.0f;
+      translate_xl = 0.0f;
+      translate_yt = 1.0f;
+      translate_yb = 0.0f;
+      z_flag = false;
+      break;
+    case 'z':
+      if(z_flag == false){
+        translate_xl += view_range;
+        translate_yb += view_range;
+        translate_xr -= view_range;
+        translate_yt -= view_range;
+      }else{
+        translate_xl -= view_range;
+        translate_yb -= view_range;
+        translate_xr += view_range;
+        translate_yt += view_range;
+      }
+      z_flag = !z_flag;
+      break;
     case 's':
       flag = !flag;
       break;
-    case 'i':
-      rotate_x +=2;
-      break;
-    case 'k':
-      rotate_x -=2;
+    case 'h':
+      translate_xr -= 0.05f;
+      translate_xl -= 0.05f;
       break;
     case 'j':
-      rotate_y +=2;
+      translate_yt -= 0.05f;
+      translate_yb -= 0.05f;
       break;
     case 'l':
-      rotate_y -=2;
+      translate_xr += 0.05f;
+      translate_xl += 0.05f;
       break;
-    case 'u':
-      translate_z +=0.1;
-      break;
-    case 'o':
-      translate_z -=0.1;
-      break;
-    case 'I':
-      rotate_x +=0.4;
-      break;
-    case 'K':
-      rotate_x -=0.4;
-      break;
-    case 'J':
-      rotate_y +=0.4;
-      break;
-    case 'L':
-      rotate_y -=0.4;
-      break;
-    case 'U':
-      translate_z +=0.02;
-      break;
-    case 'O':
-      translate_z -=0.02;
+    case 'k':
+      translate_yt += 0.05f;
+      translate_yb += 0.05f;
       break;
     case 'r':
+      z_flag=false;
       flag = false;
       incrt = 1;
       kt = 1;

@@ -1,0 +1,11 @@
+  j=grid_height/2-r/2;
+  for(i=grid_width/2-r/2;i<grid_width/2+r/2;i++)
+  {
+    index = grid_width * j + i;
+    h_g_data[index*3] = (GLubyte)0;
+    h_g_data[index*3+1] = (GLubyte)0;
+    h_g_data[index*3+2] = (GLubyte)0;
+    j+=(int)(sqrt(2))
+  } 
+
+
