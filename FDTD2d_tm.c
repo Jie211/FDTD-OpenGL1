@@ -39,8 +39,10 @@ const float max_y = 0.5f;
  ****************/
 float c = 2.99792458e8;
 float freq = 1.0e9;
+/* float freq = 1.0e15; */
 float lambda;
 float resolution = 20.0;
+/* float resolution = 40.0; */
 float delta_x;
 float delta_y;
 float alpha = 0.5;
@@ -52,6 +54,7 @@ float epsilon0 = 8.854187e-12f;
 float epsilonMax;
 int M = 4;
 int L = 12;
+/* int L = 24; */
 float r0 = -6;
 float ecmax;
 float Ez_max = 2.060459378159e-03f;
@@ -195,6 +198,7 @@ void drawWallColor(void)
 
   }
 }
+
 void drawWall(void)
 {
   int i, j;
@@ -213,7 +217,6 @@ void drawWall(void)
     Ez[i][j]=0.0;
   }
 }
-
 
 void drawRactColor(float r)
 {
@@ -616,11 +619,13 @@ void setInitialData(unsigned int width, unsigned int height)
   power_x=10;
   power_y=grid_height/2-1;
 
-  rectD=10;
 
   delta_x = lambda / resolution;
   delta_y = lambda / resolution;	
   delta_t = (1.0 / (sqrt(pow((1 / delta_x), 2.0)+pow((1 / delta_y), 2.0))))*(1.0 / c)*alpha;
+
+  rectD=lambda/2/delta_x;
+
   anim_dt = (1.0 / (sqrt(pow((1 / delta_x), 2.0)+pow((1 / delta_y), 2.0))))*(1.0 / c)*alpha;
   step = 1.0 / freq / delta_t;
   mu0 = 1.0e-7f * 4.0 * M_PI;
